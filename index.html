@@ -571,6 +571,14 @@
     .reveal { opacity: 1; transform: none; }
     .hero-photo, .hero-tag, .hero-name, .hero-role, .hero-desc, .hero-scroll { opacity: 1; transform: translateY(0); }
   }
+
+  /* Touch devices: skip animations, show everything immediately */
+  @media (hover: none) and (pointer: coarse) {
+    .hero-photo, .hero-tag, .hero-name, .hero-role, .hero-desc, .hero-scroll {
+      opacity: 1 !important; transform: none !important; animation: none !important;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
