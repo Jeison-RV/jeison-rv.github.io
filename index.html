@@ -551,8 +551,24 @@
     .hero-ctas { flex-direction: column; align-items: center; }
   }
 
-  /* MOBILE — hamburger nav for touch devices (covers desktop-mode on mobile too) */
-  @media (hover: none) and (pointer: coarse), (max-width: 640px) {
+  /* MOBILE — hamburger nav (JS adds .is-touch to <html> on touch devices) */
+  .is-touch nav { padding: 0.75rem 1.25rem; }
+  .is-touch .nav-hamburger { display: flex; }
+  .is-touch .nav-links {
+    display: none; flex-direction: column; gap: 0;
+    position: fixed; top: 52px; left: 0; right: 0;
+    background: rgba(10,10,14,0.97); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0; z-index: 999;
+  }
+  .is-touch .nav-links.open { display: flex; }
+  .is-touch .nav-links a {
+    font-size: 0.82rem; padding: 0.85rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .is-touch .nav-links a:last-child { border-bottom: none; }
+
+  @media (max-width: 640px) {
     nav { padding: 0.75rem 1.25rem; }
     .nav-hamburger { display: flex; }
     .nav-links {
@@ -988,6 +1004,11 @@
 </footer>
 
 <script>
+  // TOUCH DETECTION — most reliable way, works even in desktop mode on mobile
+  if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window) {
+    document.documentElement.classList.add('is-touch');
+  }
+
   // PROGRESS BAR
   const prog = document.getElementById('progress');
   window.addEventListener('scroll', () => {
