@@ -544,8 +544,15 @@
   .nav-hamburger.open span:nth-child(2) { opacity: 0; }
   .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-  /* MOBILE */
+  /* MOBILE — width-based layout adjustments */
   @media (max-width: 640px) {
+    section { padding: 4rem 1.25rem; }
+    .contact-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .hero-ctas { flex-direction: column; align-items: center; }
+  }
+
+  /* MOBILE — hamburger nav for touch devices (covers desktop-mode on mobile too) */
+  @media (hover: none) and (pointer: coarse), (max-width: 640px) {
     nav { padding: 0.75rem 1.25rem; }
     .nav-hamburger { display: flex; }
     .nav-links {
@@ -561,9 +568,6 @@
       border-bottom: 1px solid rgba(255,255,255,0.04);
     }
     .nav-links a:last-child { border-bottom: none; }
-    section { padding: 4rem 1.25rem; }
-    .contact-grid { grid-template-columns: 1fr; gap: 2rem; }
-    .hero-ctas { flex-direction: column; align-items: center; }
   }
 
   @media (prefers-reduced-motion: reduce) {
