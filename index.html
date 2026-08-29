@@ -613,7 +613,7 @@
 
 <nav>
   <div class="nav-logo">jeison.dev</div>
-  <button class="nav-hamburger" id="nav-hamburger" aria-label="Menú" aria-expanded="false">
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Menú" aria-expanded="false" onclick="var nl=document.getElementById('nav-links');var op=nl.classList.toggle('open');this.classList.toggle('open',op);this.setAttribute('aria-expanded',op);">
     <span></span><span></span><span></span>
   </button>
   <div class="nav-links" id="nav-links">
