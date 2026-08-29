@@ -1053,17 +1053,32 @@
   // HAMBURGER
   const hamburger = document.getElementById('nav-hamburger');
   const navLinksEl = document.getElementById('nav-links');
-  hamburger.addEventListener('click', () => {
+
+  function toggleNav() {
     const open = navLinksEl.classList.toggle('open');
     hamburger.classList.toggle('open', open);
     hamburger.setAttribute('aria-expanded', open);
+  }
+
+  function closeNav() {
+    navLinksEl.classList.remove('open');
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', false);
+  }
+
+  let lastTouchTime = 0;
+  hamburger.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    lastTouchTime = Date.now();
+    toggleNav();
+  }, { passive: false });
+  hamburger.addEventListener('click', function() {
+    if (Date.now() - lastTouchTime > 350) toggleNav();
   });
+
   navLinksEl.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      navLinksEl.classList.remove('open');
-      hamburger.classList.remove('open');
-      hamburger.setAttribute('aria-expanded', false);
-    });
+    a.addEventListener('touchstart', function(e) { e.preventDefault(); closeNav(); window.location.href = a.getAttribute('href'); }, { passive: false });
+    a.addEventListener('click', closeNav);
   });
 
   // NAV ACTIVE
