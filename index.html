@@ -1113,11 +1113,7 @@
       }
     });
   }, { threshold: 0.5 });
-  sections.forEach(s => sio.observe(s));&body=${encodeURIComponent(`Nombre: ${name}\nEmail: ${email}\n\n${text}`)}`;
-    btn.textContent = '✓ Enviado';
-    btn.style.background = 'var(--green)';
-    msg.style.display = 'block';
-  }
+  sections.forEach(s => sio.observe(s));
 
   // SMOOTH NAV CLICKS
   document.querySelectorAll('a[href^="#"]').forEach(a => {
