@@ -476,14 +476,8 @@
   .reveal-delay-4 { transition-delay: 0.4s; }
 
   /* PARTICLES */
-  #particles {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-  }
-
-  .particle {
-    position: absolute; width: 2px; height: 2px; border-radius: 50%;
-    background: var(--accent); opacity: 0;
-    animation: floatParticle linear infinite;
+  #kinetic-grid {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
   }
 
   /* WHATSAPP FLOAT */
@@ -497,14 +491,6 @@
   }
   #wa-float:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(37,211,102,0.55); }
 
-  /* CURSOR GLOW */
-  #cursor-glow {
-    position: fixed; width: 300px; height: 300px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(108,142,255,0.04) 0%, transparent 70%);
-    pointer-events: none; z-index: 1;
-    transform: translate(-50%, -50%);
-    transition: opacity 0.3s;
-  }
 
   /* ANIMATIONS */
   @keyframes fadeUp {
@@ -522,12 +508,6 @@
     50% { transform: scaleY(1); transform-origin: top; }
     51% { transform: scaleY(1); transform-origin: bottom; }
     100% { transform: scaleY(0); transform-origin: bottom; }
-  }
-  @keyframes floatParticle {
-    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-    10% { opacity: 0.4; }
-    90% { opacity: 0.2; }
-    100% { transform: translateY(-100px) translateX(var(--drift)); opacity: 0; }
   }
 
   /* HAMBURGER */
@@ -608,8 +588,7 @@
 <a id="wa-float" href="https://wa.me/573154100131?text=Hola%20Jeison%2C%20vi%20tu%20portafolio%20y%20me%20gustar%C3%ADa%20contactarte." target="_blank" rel="noopener" aria-label="Contactar por WhatsApp">
   <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
 </a>
-<div id="cursor-glow"></div>
-<div id="particles"></div>
+<canvas id="kinetic-grid"></canvas>
 
 <nav>
   <div class="nav-logo">jeison.dev</div>
@@ -1036,31 +1015,123 @@
     prog.style.width = (s / h * 100) + '%';
   });
 
-  // CURSOR GLOW
-  const glow = document.getElementById('cursor-glow');
-  let mx = 0, my = 0, gx = 0, gy = 0;
-  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-  function animGlow() {
-    gx += (mx - gx) * 0.08;
-    gy += (my - gy) * 0.08;
-    glow.style.left = gx + 'px';
-    glow.style.top = gy + 'px';
-    requestAnimationFrame(animGlow);
-  }
-  animGlow();
+  // KINETIC GRID
+  (function() {
+    const canvas = document.getElementById('kinetic-grid');
+    const ctx = canvas.getContext('2d');
+    const CELL = 55, RADIUS = 260, WARP = 24, DOT = 28, LERP = 0.08;
+    const LINE_BASE = { r:255, g:255, b:255, a:0.13 };
+    const theme = {
+      bg: '#0a0a0f',
+      lineActive: { r:108, g:142, b:255, a:0.9 },
+      nodeActive: { r:108, g:142, b:255, a:1.0 },
+      glow: '108,142,255', ripple: '140,170,255'
+    };
+    let W = 0, H = 0;
+    const mouse = { x:-9999, y:-9999 }, target = { x:-9999, y:-9999 };
+    const ripples = [];
+    const isTouch = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
 
-  // PARTICLES
-  const pc = document.getElementById('particles');
-  for (let i = 0; i < 18; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const x = Math.random() * 100;
-    const dur = 12 + Math.random() * 18;
-    const delay = Math.random() * -20;
-    const drift = (Math.random() - 0.5) * 200;
-    p.style.cssText = `left:${x}%;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s;opacity:0;`;
-    pc.appendChild(p);
-  }
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    if (!isTouch) {
+      window.addEventListener('mousemove', e => { target.x = e.clientX; target.y = e.clientY; });
+      window.addEventListener('click', e => {
+        ripples.push({ x: e.clientX, y: e.clientY, radius: 0, opacity: 1, born: performance.now() });
+      });
+    }
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function lerpColor(base, active, t) {
+      return `rgba(${Math.round(lerp(base.r,active.r,t))},${Math.round(lerp(base.g,active.g,t))},${Math.round(lerp(base.b,active.b,t))},${lerp(base.a,active.a,t).toFixed(3)})`;
+    }
+
+    function warpedPoint(gx, gy, col, row, cols, rows) {
+      const em = 1.5;
+      const pin = Math.pow(Math.min(col/em,(cols-1-col)/em,1) * Math.min(row/em,(rows-1-row)/em,1), 2);
+      const dx = gx - mouse.x, dy = gy - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const proximity = Math.max(0, 1 - dist/RADIUS) * pin;
+      let rx = 0, ry = 0;
+      for (const r of ripples) {
+        const rdx = gx-r.x, rdy = gy-r.y, rd = Math.sqrt(rdx*rdx+rdy*rdy);
+        const diff = rd - r.radius;
+        if (Math.abs(diff) < 55) {
+          const s = (1 - Math.abs(diff)/55) * r.opacity * 18 * pin;
+          const a = Math.atan2(rdy,rdx), sg = diff < 0 ? 1 : -1;
+          rx += Math.cos(a)*s*sg; ry += Math.sin(a)*s*sg;
+        }
+      }
+      if (dist < RADIUS && dist > 0 && pin > 0) {
+        const t = dist/RADIUS;
+        const e2 = t < 0.01 ? 0 : (1-t)*(1-t)*Math.min(1,dist/60);
+        const amt = e2 * WARP * pin, ang = Math.atan2(dy,dx);
+        return { pt:{ x:gx-Math.cos(ang)*amt+rx, y:gy-Math.sin(ang)*amt+ry }, proximity };
+      }
+      return { pt:{ x:gx+rx, y:gy+ry }, proximity };
+    }
+
+    function draw(now) {
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = theme.bg; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      for (let x=DOT/2; x<W; x+=DOT) for (let y=DOT/2; y<H; y+=DOT) {
+        ctx.beginPath(); ctx.arc(x,y,0.7,0,Math.PI*2); ctx.fill();
+      }
+      for (let i=ripples.length-1; i>=0; i--) {
+        const r=ripples[i], age=(now-r.born)/1000;
+        r.radius=Math.max(0,age*400); r.opacity=Math.max(0,1-age*1.2);
+        if(r.opacity<=0) ripples.splice(i,1);
+      }
+      const cols=Math.max(2,Math.ceil(W/CELL))+1, rows=Math.max(2,Math.ceil(H/CELL))+1;
+      const cw=W/(cols-1), ch=H/(rows-1);
+      const pts=[], prox=[];
+      for (let row=0; row<rows; row++) {
+        pts[row]=[]; prox[row]=[];
+        for (let col=0; col<cols; col++) {
+          const {pt,proximity}=warpedPoint(col*cw,row*ch,col,row,cols,rows);
+          pts[row][col]=pt; prox[row][col]=proximity;
+        }
+      }
+      function seg(p1,p2,pr1,pr2) {
+        const avg=(pr1+pr2)/2, t=avg*avg*(3-2*avg);
+        ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y);
+        ctx.strokeStyle=lerpColor(LINE_BASE,theme.lineActive,t);
+        ctx.lineWidth=lerp(0.8,1.5,t); ctx.stroke();
+      }
+      ctx.lineCap='butt';
+      for (let row=0; row<rows; row++) for (let col=0; col<cols-1; col++) seg(pts[row][col],pts[row][col+1],prox[row][col],prox[row][col+1]);
+      for (let col=0; col<cols; col++) for (let row=0; row<rows-1; row++) seg(pts[row][col],pts[row+1][col],prox[row][col],prox[row+1][col]);
+      for (let row=0; row<rows; row++) for (let col=0; col<cols; col++) {
+        const p=pts[row][col], pr=prox[row][col], t=pr*pr*(3-2*pr);
+        const r=lerp(1.8,3.2,t);
+        if (t>0.3) {
+          const gr=r+lerp(0,6,(t-0.3)/0.7), grd=ctx.createRadialGradient(p.x,p.y,r*0.5,p.x,p.y,gr);
+          grd.addColorStop(0,`rgba(${theme.glow},${(t*0.3).toFixed(3)})`); grd.addColorStop(1,`rgba(${theme.glow},0)`);
+          ctx.beginPath(); ctx.arc(p.x,p.y,gr,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2);
+        ctx.fillStyle=lerpColor({r:255,g:255,b:255,a:0.2},theme.nodeActive,t); ctx.fill();
+      }
+      for (const r of ripples) {
+        ctx.beginPath(); ctx.arc(r.x,r.y,Math.max(0,r.radius),0,Math.PI*2);
+        ctx.strokeStyle=`rgba(${theme.ripple},${(r.opacity*0.28).toFixed(3)})`; ctx.lineWidth=1.5; ctx.stroke();
+      }
+    }
+
+    function animate(now) {
+      mouse.x = lerp(mouse.x, target.x, LERP);
+      mouse.y = lerp(mouse.y, target.y, LERP);
+      draw(now);
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+  })();
 
   // SCROLL REVEAL
   const reveals = document.querySelectorAll('.reveal');
